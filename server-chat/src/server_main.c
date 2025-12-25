@@ -6,17 +6,16 @@ t_config* config;
 int main() {
 
     logger = iniciar_logger();
-    config = iniciar_config("/home/luca/Manda-Chat/server-chat/src/server.config");
-    log_info(logger, "LOG SERVER CREADO");
+    config = iniciar_config("/home/utnso/Manda-Chat/server-chat/src/server.config");
     
-    printf("SERVER: HOlis \n");
+    char* puerto = config_get_string_value(config, "PUERTO_ESCUCHA");
+    char* ip        = config_get_string_value(config, "IP_SERVER");
 
+    
+    int socket_server = iniciar_servidor(puerto);
+    log_info(logger, "Esperando clientes en el puerto %s : %s", puerto, ip);
+    int fd_escucha = esperar_clientes(socket_server);
+    log_info(logger, "Se conecto un cliente!!");
 
-    
-    char* puerto = config_get_string_value(config, "PUERTO_ESCUCHA");;
-    log_info(logger, "puerto del servidor %s", puerto);
-    
-    iniciar_servidor(puerto);
-    
     return 0;
 }
