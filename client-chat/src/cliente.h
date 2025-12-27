@@ -22,3 +22,5 @@ t_config* iniciar_config(char* rutaConfig);
 
 void enviar_mensajes(const char* nombre, int socket);
 
+void* escuchar_mensajes(void* arg);
+

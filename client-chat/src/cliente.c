@@ -67,9 +67,9 @@ void enviar_mensajes(const char* nombre, int socket){
     
     while(1){
         char mensaje[512];
-        char mensaje_final[512];
-        char* nombre_usuario = nombre;
-        printf("Ingrese su mensaje: ");
+        char mensaje_final[1024];
+        const char* nombre_usuario = nombre;
+        //printf("Ingrese su mensaje: \n");
         fflush(stdout);
         fgets(mensaje, sizeof(mensaje), stdin);
         mensaje[strcspn(mensaje, "\n")] = '\0';
@@ -77,7 +77,7 @@ void enviar_mensajes(const char* nombre, int socket){
                 "%s: %s", nombre_usuario, mensaje);
 
 
-        log_info(logger, "Enviando mensaje: %s", mensaje_final);
+        //log_info(logger, "Enviando mensaje: %s", mensaje_final);
 
         int offset = 0;
         int largo_mensaje = strlen(mensaje_final) + 1;
@@ -93,4 +93,47 @@ void enviar_mensajes(const char* nombre, int socket){
         free(buffer);
 
     }
+}
+
+
+
+
+void* escuchar_mensajes(void* arg){
+    int socket = *(int*)arg;
+
+    while(1){
+        int offset = 0;
+        int tam_buffer;
+        char* mensaje;
+        int tam_mensaje;
+
+        if (recv(socket, &tam_buffer, sizeof(int), MSG_WAITALL) <= 0) {
+            log_info(logger, "No hay mensajes nuevos del servidor");
+            break;              
+        }
+
+        void* buffer = malloc(tam_buffer);
+        if (recv(socket, buffer, tam_buffer, MSG_WAITALL) <= 0) {
+            log_error(logger, "Error recibiendo buffer del servidor");
+            free(buffer);
+            close(socket);
+            break;
+        }
+
+        //log_info(logger, "Nuevo mensaje recibido del servidor:");
+        memcpy(&tam_mensaje, buffer + offset, sizeof(int));
+        offset += sizeof(int);
+        //log_info(logger, "Tamaño del mensaje: %d", tam_mensaje);
+        mensaje = malloc(tam_mensaje);
+        memcpy(mensaje, buffer + offset, tam_mensaje);
+        //log_info(logger, "Mensaje recibido: %s", mensaje);
+        offset += tam_mensaje;
+        log_info(logger, "%s", mensaje);
+
+
+        free(mensaje);
+        free(buffer);
+    }
+
+    return NULL;
 }

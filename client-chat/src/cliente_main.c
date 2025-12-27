@@ -47,6 +47,10 @@ int main() {
 
     //TODO HILO ESCUCHAR MENSAJES DE OTROS
 
+    pthread_t hilo_escuchar_mensajes;      
+    pthread_create(&hilo_escuchar_mensajes, NULL, (void*) escuchar_mensajes, &socket_server);
+    pthread_detach(hilo_escuchar_mensajes);
+
     enviar_mensajes(nombre, socket_server);
 
     return 0;

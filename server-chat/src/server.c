@@ -186,6 +186,7 @@ void atender_cliente(void* arg){
         int offset = 0;
         int tam_buffer;
         char* mensaje;
+        int tam_mensaje;
         //log_info(logger, "Esperando mensajes de los clientes...");
 
         if (recv(fd_conexion_ptr, &tam_buffer, sizeof(int), MSG_WAITALL) <= 0) {
@@ -201,27 +202,32 @@ void atender_cliente(void* arg){
             break;
         }
 
-        memcpy(&tam_buffer, buffer + offset, sizeof(int));
-        offset += sizeof(int);
-        mensaje = malloc(tam_buffer);
-        memcpy(mensaje, buffer + offset, tam_buffer);
-        offset += tam_buffer;
-        free(buffer);
-        log_info(logger, "%s", mensaje);
-
-
-
-
+        
+        
+        
+        //log_info(logger, "Hay %d usuarios conectados", list_size(usuarios_conectados));
+        
         pthread_mutex_lock(&mutex_conectados);
         for(int i =0; i<list_size(usuarios_conectados); i++){
             t_user* usuario = list_get(usuarios_conectados, i);
             int socket_cliente = usuario->socket;
-
+            //log_info(logger, "Enviando mensaje al usuario %s en el socket %d", usuario->nombre, socket_cliente);
             
-            pthread_mutex_unlock(&mutex_conectados);
-
+            send(socket_cliente, &tam_buffer, sizeof(int), 0);
+            send(socket_cliente, buffer, tam_buffer, 0);
+            
         }
-              
+        pthread_mutex_unlock(&mutex_conectados);
+        
+        memcpy(&tam_mensaje, buffer + offset, sizeof(int));
+        offset += sizeof(int);
+        mensaje = malloc(tam_mensaje);
+        memcpy(mensaje, buffer + offset, tam_mensaje);
+        offset += tam_mensaje;
+        log_info(logger, "%s", mensaje);
+
+        free(mensaje);
+        free(buffer);
     }
 
 }
