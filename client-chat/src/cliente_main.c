@@ -7,21 +7,33 @@ int main() {
 
     logger = iniciar_logger();    
     log_info(logger, "path es /home/luca/Manda-Chat/client-chat/src/cliente.config");
-    config = iniciar_config("/home/luca/Manda-Chat/client-chat/src/cliente.config");
+    config = iniciar_config("/home/utnso/Manda-Chat/client-chat/src/cliente.config");
 
-    char* puerto    = config_get_string_value(config, "PUERTO_SERVER");
-    char* ip        = config_get_string_value(config, "IP_SERVER");
+    //char* puerto    = config_get_string_value(config, "PUERTO_SERVER");
+    //char* ip        = config_get_string_value(config, "IP_SERVER");
 
 
     char nombre[50];
+    char puerto[20];
+    char ip[20];
 
     printf("Ingrese su nombre: ");
     fflush(stdout);   // importante si usás logs / buffers
-
     fgets(nombre, sizeof(nombre), stdin);
-
-    // eliminar el '\n' que agrega fgets
     nombre[strcspn(nombre, "\n")] = '\0';
+
+
+    printf("Ingrese ip del servidor: ");
+    fflush(stdout);   // importante si usás logs / buffers
+    fgets(ip, sizeof(ip), stdin);
+    ip[strcspn(ip, "\n")] = '\0';
+
+    printf("Ingrese su puerto del servidor: ");
+    fflush(stdout);   // importante si usás logs / buffers
+    fgets(puerto, sizeof(puerto), stdin);
+    puerto[strcspn(puerto, "\n")] = '\0';
+    printf("DEBUG: IP='%s' Puerto='%s'\n", ip, puerto);
+
 
     printf("Hola %s!\n", nombre);
 
