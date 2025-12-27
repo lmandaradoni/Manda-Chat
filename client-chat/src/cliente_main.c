@@ -19,6 +19,7 @@ int main() {
 
     printf("Ingrese su nombre: ");
     fflush(stdout);   // importante si usás logs / buffers
+
     fgets(nombre, sizeof(nombre), stdin);
     nombre[strcspn(nombre, "\n")] = '\0';
 
@@ -30,7 +31,9 @@ int main() {
 
     printf("Ingrese su puerto del servidor: ");
     fflush(stdout);   // importante si usás logs / buffers
+
     fgets(puerto, sizeof(puerto), stdin);
+
     puerto[strcspn(puerto, "\n")] = '\0';
     printf("DEBUG: IP='%s' Puerto='%s'\n", ip, puerto);
 

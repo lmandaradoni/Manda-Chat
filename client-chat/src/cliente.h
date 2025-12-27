@@ -13,7 +13,8 @@
 #include <sys/types.h>
 #include <signal.h>
 
-
+#include <termios.h>
+#include <unistd.h>
 
 int crear_conexion(char *ip, char *puerto);
 
@@ -23,4 +24,8 @@ t_config* iniciar_config(char* rutaConfig);
 void enviar_mensajes(const char* nombre, int socket);
 
 void* escuchar_mensajes(void* arg);
+
+void desactivar_echo();
+
+void activar_echo();
 

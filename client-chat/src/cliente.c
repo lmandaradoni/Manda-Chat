@@ -71,7 +71,13 @@ void enviar_mensajes(const char* nombre, int socket){
         const char* nombre_usuario = nombre;
         //printf("Ingrese su mensaje: \n");
         fflush(stdout);
+        
+        //desactivar_echo();
         fgets(mensaje, sizeof(mensaje), stdin);
+        //activar_echo();
+        printf("\033[1A\033[2K\r"); 
+        fflush(stdout);
+
         mensaje[strcspn(mensaje, "\n")] = '\0';
         snprintf(mensaje_final, sizeof(mensaje_final),
                 "%s: %s", nombre_usuario, mensaje);
@@ -88,9 +94,16 @@ void enviar_mensajes(const char* nombre, int socket){
         memcpy(buffer + offset, mensaje_final, largo_mensaje);
         offset += largo_mensaje;
 
+        
         send(socket, &tam_buffer, sizeof(int), 0);
         send(socket, buffer, tam_buffer, 0);
+        
+        printf("\033[2K\r");
+        fflush(stdout);
+        
         free(buffer);
+
+        
 
     }
 }
@@ -128,6 +141,8 @@ void* escuchar_mensajes(void* arg){
         memcpy(mensaje, buffer + offset, tam_mensaje);
         //log_info(logger, "Mensaje recibido: %s", mensaje);
         offset += tam_mensaje;
+
+    
         log_info(logger, "%s", mensaje);
 
 
@@ -136,4 +151,19 @@ void* escuchar_mensajes(void* arg){
     }
 
     return NULL;
+}
+
+
+void desactivar_echo() {
+    struct termios tty;
+    tcgetattr(STDIN_FILENO, &tty);
+    tty.c_lflag &= ~ECHO;
+    tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+}
+
+void activar_echo() {
+    struct termios tty;
+    tcgetattr(STDIN_FILENO, &tty);
+    tty.c_lflag |= ECHO;
+    tcsetattr(STDIN_FILENO, TCSANOW, &tty);
 }
