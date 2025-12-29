@@ -40,4 +40,8 @@ make
 chmod +x server-chat/bin/server-chat
 chmod +x client-chat/bin/client-chat
 
+chmod +x run-client.sh
+chmod +x run-server.sh
+chmod +x install.sh
+
 echo "Instalación completa"
