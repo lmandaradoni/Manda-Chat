@@ -191,6 +191,7 @@ void atender_cliente(void* arg){
 
         if (recv(fd_conexion_ptr, &tam_buffer, sizeof(int), MSG_WAITALL) <= 0) {
             log_info(logger, "No hay mensajes nuevos de este cliente %d", fd_conexion_ptr);
+            
             break;              
         }
 

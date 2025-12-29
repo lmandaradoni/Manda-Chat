@@ -9,11 +9,15 @@ int main() {
 
     logger = iniciar_logger();
 
-    log_info(logger, "path es /home/luca/Manda-Chat/server-chat/src/server.config");
-    config = iniciar_config("/home/luca/Manda-Chat/server-chat/src/server.config");
+    //log_info(logger, "path es /home/luca/Manda-Chat/server-chat/src/server.config");
     
-    char* puerto = config_get_string_value(config, "PUERTO_ESCUCHA");
-    char* ip        = config_get_string_value(config, "IP_SERVER");
+    //config = iniciar_config("/home/luca/Manda-Chat/server-chat/src/server.config");
+    // char* puerto = config_get_string_value(config, "PUERTO_ESCUCHA");
+    // char* ip        = config_get_string_value(config, "IP_SERVER");
+
+    char* puerto = "9191";
+    char* ip        = "127.0.0.1";
+    
     
     sem_t sem_el_inmortal;
     sem_init(&sem_el_inmortal, 0, 0);
