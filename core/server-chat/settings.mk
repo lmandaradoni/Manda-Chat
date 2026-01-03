@@ -3,7 +3,7 @@ LIBS=utils commons pthread readline m crypto
 
 # Custom libraries' paths
 SHARED_LIBPATHS=
-STATIC_LIBPATHS=../utils
+STATIC_LIBPATHS=../../utils
 
 # Compiler flags
 CDEBUG=-g -Wall -DDEBUG -fdiagnostics-color=always

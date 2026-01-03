@@ -101,12 +101,6 @@ void* aceptar_clientes(void* arg){
         *fd_conexion_ptr = esperar_clientes(servidor_escucha);
         //log_info(logger, "Se conecto un cliente!!");
         
-        size_t bytes;
-        int32_t handshake;
-        int32_t resultOk = 0;
-        int32_t resultError = -1;
-
-
 
         //HANDSHAKE
         int tam_buffer;
@@ -169,6 +163,9 @@ void* aceptar_clientes(void* arg){
         pthread_t hilo_atender_query;
         pthread_create(&hilo_atender_query, NULL, (void*) atender_cliente, fd_conexion_ptr);
         pthread_detach(hilo_atender_query);
+        
+        free(nombre_user);
+        free(buffer);
     
     }
 }
@@ -187,6 +184,9 @@ void atender_cliente(void* arg){
         int tam_buffer;
         char* mensaje;
         int tam_mensaje;
+
+        int tam_nombre;
+        char* nombre;
         //log_info(logger, "Esperando mensajes de los clientes...");
 
         if (recv(fd_conexion_ptr, &tam_buffer, sizeof(int), MSG_WAITALL) <= 0) {
@@ -220,15 +220,23 @@ void atender_cliente(void* arg){
         }
         pthread_mutex_unlock(&mutex_conectados);
         
+
+        memcpy(&tam_nombre, buffer + offset, sizeof(int));
+        offset += sizeof(int);
+        nombre = malloc(tam_nombre);
+        memcpy(nombre, buffer + offset, tam_nombre);
+        offset += tam_nombre;
         memcpy(&tam_mensaje, buffer + offset, sizeof(int));
         offset += sizeof(int);
         mensaje = malloc(tam_mensaje);
         memcpy(mensaje, buffer + offset, tam_mensaje);
         offset += tam_mensaje;
-        log_info(logger, "%s", mensaje);
+
+        log_info(logger, "%s: %s",nombre, mensaje);
 
         free(mensaje);
         free(buffer);
+        free(nombre);
     }
 
 }
