@@ -17,46 +17,71 @@ fn start_client(
     ip: String,
     port: String,
     state: tauri::State<ClientState>,
-    app_handle: AppHandle, // Inyectamos el handle para emitir eventos
+    app_handle: tauri::AppHandle, 
 ) -> Result<String, String> {
 
-    let mut cmd = Command::new("../../../core/client-chat/bin/client-chat");
+   
+    let mut current_dir = std::env::current_dir().map_err(|e| format!("Error de CWD: {}", e))?;
 
-    // Importante: piped para ambos
+    
+    let mut bin_path = current_dir.clone();
+  
+    if bin_path.ends_with("src-tauri") {
+        bin_path.pop(); // a manda-chat-ui
+    }
+    
+    bin_path.pop(); // de manda-chat-ui a ui
+    bin_path.pop(); // de ui a Manda-Chat 
+ 
+    bin_path.push("core");
+    bin_path.push("client-chat");
+    bin_path.push("bin");
+    bin_path.push("client-chat");
+
+    println!("Intentando ejecutar binario en: {:?}", bin_path);
+
+  
+    if !bin_path.exists() {
+        return Err(format!(
+            "El archivo no existe en la ruta: {:?}. ¿Hiciste 'make' en la carpeta del cliente?", 
+            bin_path
+        ));
+    }
+
+    let mut cmd = Command::new(bin_path);
+
     cmd.stdin(Stdio::piped())
        .stdout(Stdio::piped()) 
        .stderr(Stdio::inherit());
 
-    let mut child = cmd.spawn().map_err(|e| e.to_string())?;
-    let mut stdin = child.stdin.take().ok_or("No stdin")?;
-    let stdout = child.stdout.take().ok_or("No stdout")?;
+    let mut child = cmd.spawn().map_err(|e| format!("Fallo al lanzar proceso C: {}", e))?;
+    let mut stdin = child.stdin.take().ok_or("No se pudo abrir el canal stdin del C")?;
+    let stdout = child.stdout.take().ok_or("No se pudo abrir el canal stdout del C")?;
 
-    // Enviamos el comando init
     let init_msg = format!(
         "{{\"cmd\":\"init\",\"name\":\"{}\",\"ip\":\"{}\",\"port\":\"{}\"}}\n",
         name, ip, port
     );
+    
+    use std::io::Write; // Asegúrate de tener esto para el write_all
     stdin.write_all(init_msg.as_bytes()).map_err(|e| e.to_string())?;
     stdin.flush().unwrap();
 
-    // Guardamos stdin en el estado
     *state.stdin.lock().unwrap() = Some(stdin);
 
-    // Hilo para leer stdout del C y mandarlo a la UI
     std::thread::spawn(move || {
-        let reader = BufReader::new(stdout);
+        let reader = std::io::BufReader::new(stdout);
+        use std::io::BufRead;
         for line in reader.lines() {
             if let Ok(l) = line {
-
                 println!("C dice: {}", l); 
-
                 let _ = app_handle.emit("backend-msg", l);
             }
         }
     });
 
     *state.child.lock().unwrap() = Some(child);
-    Ok("Cliente conectado".into())
+    Ok("Cliente iniciado y conectando...".into())
 }
 
 #[tauri::command]
