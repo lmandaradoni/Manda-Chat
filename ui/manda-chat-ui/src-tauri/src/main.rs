@@ -10,6 +10,7 @@ struct ClientState {
     stdin: Mutex<Option<ChildStdin>>,
 }
 
+
 #[tauri::command]
 fn start_client(
     name: String,
@@ -19,7 +20,7 @@ fn start_client(
     app_handle: AppHandle, // Inyectamos el handle para emitir eventos
 ) -> Result<String, String> {
 
-    let mut cmd = Command::new("/home/utnso/Manda-Chat/core/client-chat/bin/client-chat");
+    let mut cmd = Command::new("../../../core/client-chat/bin/client-chat");
 
     // Importante: piped para ambos
     cmd.stdin(Stdio::piped())
@@ -46,8 +47,9 @@ fn start_client(
         let reader = BufReader::new(stdout);
         for line in reader.lines() {
             if let Ok(l) = line {
-                // Emitimos la línea tal cual (que ya es un JSON según tu código C)
-                // Usamos un evento llamado "backend-msg"
+
+                println!("C dice: {}", l); 
+
                 let _ = app_handle.emit("backend-msg", l);
             }
         }

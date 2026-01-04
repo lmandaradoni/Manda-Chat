@@ -14,23 +14,26 @@ function Chat() {
   const [input, setInput] = useState("");
 
   useEffect(() => {
-    // Escuchar eventos desde Rust
-    const unlisten = listen<string>("backend-msg", (event) => {
-      try {
-        const data: BackendPayload = JSON.parse(event.payload);
-        
-        if (data.type === "mensaje") {
-          setMessages((prev) => [...prev, `${data.de}: ${data.text}`]);
-        } else if (data.type === "error") {
-          setMessages((prev) => [...prev, `SISTEMA: ${data.mensaje}`]);
+    const setupListener = async () => {
+      const unlisten = await listen<string>("backend-msg", (event) => {
+        console.log("Llegó de Rust:", event.payload); // DEBUG
+        try {
+          const data: BackendPayload = JSON.parse(event.payload);
+          if (data.type === "mensaje") {
+            setMessages((prev) => [...prev, `${data.de}: ${data.text}`]);
+          }
+        } catch (e) {
+          // Si entra aquí, es que C envió algo que no es JSON (como un log)
+          console.error("Error parseando JSON. Contenido recibido:", event.payload);
         }
-      } catch (e) {
-        console.error("Error parseando JSON del C:", e);
-      }
-    });
+      });
+      return unlisten;
+    };
+
+    const listenerPromise = setupListener();
 
     return () => {
-      unlisten.then((f) => f());
+      listenerPromise.then(unlisten => unlisten());
     };
   }, []);
 

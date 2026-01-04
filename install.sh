@@ -1,49 +1,43 @@
 #!/usr/bin/env bash
 set -e
 
-echo "Instalando Manda-Chat..."
+echo "Instalando dependencias de sistema para Tauri y C..."
 
-# 1. debe ser solo WSL / Linux
-if ! command -v apt >/dev/null; then
-  echo "Este instalador es solo para Linux / WSL"
-  exit 1
-fi
-
-# 2. Dependencias
-echo "Instalando dependencias..."
 sudo apt update
 sudo apt install -y \
   build-essential \
+  curl \
+  wget \
+  libssl-dev \
+  libgtk-3-dev \
+  libayatana-appindicator3-dev \
+  librsvg2-dev \
+  libwebkit2gtk-4.1-dev \
+  libreadline-dev \
   git \
-  libreadline-dev
+  pkg-config
 
-# 3. Commons
-if [ ! -d "so-commons-library" ]; then
-  echo "Clonando librerias necesarias..."
-  git clone https://github.com/sisoputnfrba/so-commons-library.git
+# --- Instalar Rust si no está ---
+if ! command -v cargo >/dev/null; then
+  echo "Instalando Rust..."
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  source $HOME/.cargo/env
 fi
 
-cd so-commons-library
-make
-sudo make install
-cd ..
+# --- Instalar Node.js si no está (opcional, pero recomendado) ---
+# Aquí podrías usar NVM o simplemente avisar que lo instalen.
 
-# 4. Compilar proyecto
-echo "Compilando..."
-cd server-chat
-make
-cd ..
+# --- SO COMMONS (Igual que antes) ---
+if [ ! -d "so-commons-library" ]; then
+  git clone https://github.com/sisoputnfrba/so-commons-library.git
+fi
+cd so-commons-library && make && sudo make install && cd ..
 
-cd client-chat
-make
-cd ..
+# --- Compilar C (Igual que antes) ---
+cd server-chat && make && cd ..
+cd client-chat && make && cd ..
 
-# 5. Permisos
-chmod +x server-chat/bin/server-chat
-chmod +x client-chat/bin/client-chat
+# --- Instalar dependencias de NPM ---
+npm install
 
-chmod +x run-client.sh
-chmod +x run-server.sh
-chmod +x install.sh
-
-echo "Instalación completa"
+echo "¡Todo listo! Ahora puedes ejecutar: npm run tauri dev"

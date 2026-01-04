@@ -193,10 +193,15 @@ void emit_conexion(const char* server, const char* port) {
 }
 
 void emit_mensaje(const char* from, const char* text) {
-    printf(
-        "{\"type\":\"mensaje\",\"de\":\"%s\",\"text\":\"%s\"}\n",
-        from, text
-    );
+    char limpio[1024];
+    strncpy(limpio, text, sizeof(limpio));
+    
+    for(int i = 0; limpio[i]; i++) {
+        if(limpio[i] == '\n' || limpio[i] == '\r') limpio[i] = ' ';
+        if(limpio[i] == '"') limpio[i] = '\''; 
+    }
+
+    printf("{\"type\":\"mensaje\",\"de\":\"%s\",\"text\":\"%s\"}\n", from, limpio);
     fflush(stdout);
 }
 
