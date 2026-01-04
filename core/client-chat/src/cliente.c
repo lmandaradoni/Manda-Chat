@@ -44,7 +44,7 @@ int crear_conexion(char *ip, char *puerto){
 
 
 t_log* iniciar_logger(void){   
-    t_log* nuevo_logger= log_create("cliente.log", "Cliente Logger", 1, LOG_LEVEL_INFO);
+    t_log* nuevo_logger= log_create("cliente.log", "Cliente Logger", 0, LOG_LEVEL_INFO);
     if(nuevo_logger == NULL)
     {
         perror("No se pudo crear el log \n");
@@ -74,9 +74,14 @@ void enviar_mensajes(const char* nombre, int socket){
         //printf("Ingrese su mensaje: \n");
         fflush(stdout);
         
-        fgets(mensaje, sizeof(mensaje), stdin);
+        if(fgets(mensaje, sizeof(mensaje), stdin) == NULL){
+            printf("STDIN cerrado\n");
+            fflush(stdout);
+            break;
+        }
 
         //printf("\033[1A\033[2K\r"); 
+        printf("MENSAJE DESDE UI: %s", mensaje);
         fflush(stdout);
 
         // mensaje[strcspn(mensaje, "\n")] = '\0';
@@ -233,12 +238,9 @@ void loop_comandos(int socket, const char* nombre) {
             break;
         }
         
-        if (!fgets(buffer, sizeof(buffer), stdin)) {
-            emit_error("frontend desconectado");
-            close(socket);
-            exit(0);
-        }
+        fflush(stdout);
     }
+    close(socket);
 }
 
 
