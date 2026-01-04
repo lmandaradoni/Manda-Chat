@@ -1,58 +1,89 @@
-import { useEffect, useState } from "react";
-import { listen, emit } from "@tauri-apps/api/event"; // <--- Importar 'emit'
+import { useState } from "react";
+import "./styles.css";
+import { invoke } from "@tauri-apps/api/core";
+import Chat from "./Chat";
 
-// ... (tus tipos y estados siguen igual) ...
+
 
 function App() {
-  const [messages, setMessages] = useState<ServerMessage[]>([]);
-  const [status, setStatus] = useState("Desconectado");
-  const [inputText, setInputText] = useState(""); // Estado para el input
+  const [name, setName] = useState("");
+  const [ip, setIp] = useState("");
+  const [port, setPort] = useState("");
 
-  // ... (tu useEffect sigue igual) ...
 
-  // Función para enviar mensaje
-  async function sendMessage(e: React.FormEvent) {
-    e.preventDefault();
-    if (!inputText.trim()) return;
+  const handleConnect = async () => {
+    try {
+      setStatus("connecting");
+      setMessage("");
 
-    // Enviamos el texto a Rust
-    await emit("ui-message", inputText);
-    
-    setInputText(""); // Limpiar input
-  }
+      const response = await invoke<string>("start_client", {
+        name,
+        ip,
+        port,
+      });
+
+      setStatus("connected");
+      setMessage(response);
+    } catch (err) {
+      setStatus("error");
+      setMessage(String(err));
+    }
+  };
+
+
+
+  const [status, setStatus] = useState<
+    "idle" | "connecting" | "connected" | "error"
+  >("idle");
+
+  const [message, setMessage] = useState("");
+
+  const isDisabled = status === "connecting" || status === "connected";
+
 
   return (
-    <div style={{ padding: 20, fontFamily: "sans-serif", display: "flex", flexDirection: "column", height: "90vh" }}>
-      <h1>🟢 Manda Chat</h1>
-      <div style={{ padding: "10px", background: "#eee", marginBottom: 10 }}>
-        Estado: <strong>{status}</strong>
-      </div>
+    <div className="app">
+      {status !== "connected" ? (
+        <>
+          <h1>Manda Chat</h1>
 
-      <div style={{ flex: 1, border: "1px solid #ccc", padding: 10, overflowY: "auto", marginBottom: 10 }}>
-        {messages.map((m, index) => (
-          <div key={index} style={{ marginBottom: 8 }}>
-            {m.type === "mensaje" && (
-              <span><strong>{m.de}:</strong> {m.text}</span>
-            )}
-            {m.type === "error" && (
-              <span style={{ color: "red" }}>⚠️ {m.msg}</span>
+          <div className="form">
+            <input
+              placeholder="Nombre"
+              value={name}
+              disabled={isDisabled}
+              onChange={(e) => setName(e.target.value)}
+            />
+
+            <input
+              placeholder="IP del servidor"
+              value={ip}
+              disabled={isDisabled}
+              onChange={(e) => setIp(e.target.value)}
+            />
+
+            <input
+              placeholder="Puerto"
+              value={port}
+              disabled={isDisabled}
+              onChange={(e) => setPort(e.target.value)}
+            />
+
+            <button onClick={handleConnect} disabled={isDisabled}>
+              {status === "connecting" ? "Conectando..." : "Conectar"}
+            </button>
+
+            {status === "error" && (
+              <div className="error">{message}</div>
             )}
           </div>
-        ))}
-      </div>
-
-      {/* Formulario de envío */}
-      <form onSubmit={sendMessage} style={{ display: "flex", gap: 10 }}>
-        <input
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          placeholder="Escribe un mensaje..."
-          style={{ flex: 1, padding: 8 }}
-        />
-        <button type="submit" style={{ padding: "8px 16px" }}>Enviar</button>
-      </form>
+        </>
+      ) : (
+        <Chat />
+      )}
     </div>
   );
+
 }
 
 export default App;

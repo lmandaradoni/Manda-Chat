@@ -1,71 +1,93 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{
-    io::{BufRead, BufReader, Write},
-    process::{Command, Stdio},
-    sync::mpsc::{channel, Sender},
-    thread,
-};
+use std::process::{Command, Stdio, ChildStdin};
+use std::sync::Mutex;
+use std::io::Write;
 
-use tauri::{Emitter, Listener};
+use tauri::State;
+
+struct ClientState {
+    stdin: Mutex<Option<ChildStdin>>
+}
+
+
+//#[tauri::command]
+// fn start_client(name: String, ip: String, port: String) -> String {
+//     println!("INIT recibido desde UI:");
+//     println!("Nombre: {}", name);
+//     println!("IP: {}", ip);
+//     println!("Puerto: {}", port);
+
+//     format!("Cliente {} inicializado en {}:{}", name, ip, port)
+// }
+
+#[tauri::command]
+fn start_client(
+    name: String,
+    ip: String,
+    port: String,
+    state: State<ClientState>,
+) -> Result<String, String> {
+
+    println!("INIT recibido desde UI:");
+    println!("Nombre: {}", name);
+    println!("IP: {}", ip);
+    println!("Puerto: {}", port);
+
+    let mut child = Command::new("/home/utnso/Manda-Chat/core/client-chat/bin/client-chat",
+    ) 
+        .stdin(Stdio::piped())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .map_err(|e| e.to_string())?;
+
+    let stdin = child.stdin.take();
+
+    *state.stdin.lock().unwrap() = stdin;
+
+    Ok(format!(
+        "Cliente {} conectado a {}:{}",
+        name, ip, port
+    ))
+}
+
+
+#[tauri::command]
+fn send_message(
+    text: String,
+    state: State<ClientState>,
+) -> Result<(), String> {
+
+    let payload = format!(
+        r#"{{ "cmd": "send", "text": "{}" }}"#,
+        text
+    );
+
+    let mut guard = state.stdin.lock().unwrap();
+
+    if let Some(stdin) = guard.as_mut() {
+        writeln!(stdin, "{}", payload)
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    } else {
+        Err("Cliente no inicializado".into())
+    }
+}
+
+
+
 
 fn main() {
     tauri::Builder::default()
-        .setup(|app| {
-            let app_handle = app.handle().clone();
-
-            // 1. Creamos un canal para mandar mensajes desde la UI hacia el hilo del proceso C
-            let (tx, rx) = channel::<String>();
-
-            // 2. Escuchamos el evento "ui-message" desde el Frontend (React)
-            app.listen("ui-message", move |event| {
-                // El payload es el texto que escribió el usuario
-                let msg_text = event.payload(); 
-                // Le damos formato JSON para C: {"cmd":"send", "text":"hola"}
-                // Quitamos comillas extra si el payload viene como string JSONizado
-                let clean_text = msg_text.trim_matches('"');
-                let json_command = format!(r#"{{"cmd":"send","text":"{}"}}"#, clean_text);
-                
-                // Lo mandamos por el canal al hilo escritor
-                let _ = tx.send(json_command);
-            });
-
-            // 3. Hilo principal del proceso C
-            thread::spawn(move || {
-                let mut child = Command::new("../../../core/client-chat/bin/client-chat")
-                    .stdin(Stdio::piped())
-                    .stdout(Stdio::piped())
-                    .spawn()
-                    .expect("No se pudo lanzar el cliente C");
-
-                let mut stdin = child.stdin.take().expect("Falló stdin");
-                let stdout = child.stdout.take().expect("Falló stdout");
-
-                // --- SUB-HILO DE LECTURA (C -> UI) ---
-                let handle_lectura = app_handle.clone();
-                thread::spawn(move || {
-                    let reader = BufReader::new(stdout);
-                    for line in reader.lines() {
-                        if let Ok(json_line) = line {
-                            println!("C dice: {}", json_line);
-                            let _ = handle_lectura.emit("client-event", json_line);
-                        }
-                    }
-                });
-
-                // --- HILO DE ESCRITURA (UI -> C) ---
-                // A. Mandamos el INIT apenas arranca
-                let init_cmd = r#"{"cmd":"init","name":"TauriUser","ip":"127.0.0.1","port":"9191"}"#;
-                writeln!(stdin, "{}", init_cmd).expect("Error escribiendo init");
-
-                // B. Esperamos mensajes que vengan del canal (desde la UI)
-                for msg in rx {
-                    writeln!(stdin, "{}", msg).expect("Error enviando mensaje a C");
-                }
-            });
-
-            Ok(())
+        .manage(ClientState {
+            stdin: Mutex::new(None),
         })
+        .invoke_handler(tauri::generate_handler![
+            start_client,
+            send_message
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+
