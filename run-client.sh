@@ -1,4 +1,3 @@
 #!/bin/bash
-cd core
-cd client-chat
-./bin/client-chat
+cd /home/utnso/Manda-Chat/ui/manda-chat-ui
+nmp run tauri dev
