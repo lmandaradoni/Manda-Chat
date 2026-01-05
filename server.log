@@ -1,1 +1,4 @@
-./run-server.sh: line 30: ./bin/server-chat: No such file or directory
+bind: Address already in use
+[INFO] 16:37:19:382 Master Logger/(5170:5170): Esperando clientes en el puerto 9191 : 127.0.0.1
+[0m[31m[ERROR] 16:37:19:383 Master Logger/(5170:5174): Error recibiendo buffer
+[0m
