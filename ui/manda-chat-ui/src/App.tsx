@@ -41,48 +41,65 @@ function App() {
   const isDisabled = status === "connecting" || status === "connected";
 
 
-  return (
-    <div className="app">
-      {status !== "connected" ? (
-        <>
-          <h1>Manda Chat</h1>
+  const handleDisconnect = () => {
+    setStatus("idle");
+    //setMessages([]);
 
-          <div className="form">
-            <input
-              placeholder="Nombre"
-              value={name}
-              disabled={isDisabled}
-              onChange={(e) => setName(e.target.value)}
-            />
+    invoke("stop_client").catch(console.error);
+  };
 
-            <input
-              placeholder="IP del servidor"
-              value={ip}
-              disabled={isDisabled}
-              onChange={(e) => setIp(e.target.value)}
-            />
 
-            <input
-              placeholder="Puerto"
-              value={port}
-              disabled={isDisabled}
-              onChange={(e) => setPort(e.target.value)}
-            />
+return (
+  <div className="app">
+    {status !== "connected" ? (
+      <>
+        <h1>Manda Chat</h1>
 
-            <button onClick={handleConnect} disabled={isDisabled}>
-              {status === "connecting" ? "Conectando..." : "Conectar"}
-            </button>
+        <form
+          className="form"
+          onSubmit={(e) => {
+            e.preventDefault(); // evita reload
+            if (!isDisabled) {
+              handleConnect();
+            }
+          }}
+        >
+          <input
+            placeholder="Nombre"
+            value={name}
+            disabled={isDisabled}
+            onChange={(e) => setName(e.target.value)}
+          />
 
-            {status === "error" && (
-              <div className="error">{message}</div>
-            )}
-          </div>
-        </>
-      ) : (
-        <Chat />
-      )}
-    </div>
-  );
+          <input
+            placeholder="IP del servidor"
+            value={ip}
+            disabled={isDisabled}
+            onChange={(e) => setIp(e.target.value)}
+          />
+
+          <input
+            placeholder="Puerto"
+            value={port}
+            disabled={isDisabled}
+            onChange={(e) => setPort(e.target.value)}
+          />
+
+          <button type="submit" disabled={isDisabled}>
+            {status === "connecting" ? "Conectando..." : "Conectar"}
+          </button>
+
+          {status === "error" && (
+            <div className="error">{message}</div>
+          )}
+        </form>
+      </>
+    ) : (
+      <Chat onDisconnect={handleDisconnect} />
+    )}
+  </div>
+);
+
 
 }
 

@@ -33,4 +33,6 @@ t_config* iniciar_config(char* rutaConfig);
 void* aceptar_clientes(void* arg);
 void atender_cliente(void* arg);
 
+void manejar_desconexion(int fd_conexion_ptr);
+
 #endif /* SERVER_H */

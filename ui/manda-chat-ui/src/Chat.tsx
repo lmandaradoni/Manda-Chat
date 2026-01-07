@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
+interface ChatProps {
+  onDisconnect: () => void;
+}
+
 interface BackendPayload {
   type: string;
   de?: string;
@@ -9,22 +13,30 @@ interface BackendPayload {
   mensaje?: string;
 }
 
-function Chat() {
+// CORRECCIÓN IMPORTANTE: Agregamos { onDisconnect }: ChatProps aquí abajo
+function Chat({ onDisconnect }: ChatProps) {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState("");
 
   useEffect(() => {
     const setupListener = async () => {
+      // Escuchamos los mensajes que vienen de Rust (backend-msg)
       const unlisten = await listen<string>("backend-msg", (event) => {
-        console.log("Llegó de Rust:", event.payload); // DEBUG
+        console.log("Llegó de Rust:", event.payload); 
         try {
           const data: BackendPayload = JSON.parse(event.payload);
+          
           if (data.type === "mensaje") {
             setMessages((prev) => [...prev, `${data.de}: ${data.text}`]);
           }
+          // Si es error o desconexión, llamamos a la función que nos pasó App.tsx
+          else if (data.type === "desconexion" || data.type === "error"){
+            console.log("Desconexion recibida:", data);
+            onDisconnect(); 
+          }
+
         } catch (e) {
-          // Si entra aquí, es que C envió algo que no es JSON (como un log)
-          console.error("Error parseando JSON. Contenido recibido:", event.payload);
+          console.error("Error parseando JSON:", event.payload);
         }
       });
       return unlisten;
@@ -32,35 +44,54 @@ function Chat() {
 
     const listenerPromise = setupListener();
 
+    // Limpieza al desmontar
     return () => {
       listenerPromise.then(unlisten => unlisten());
     };
-  }, []);
+  }, [onDisconnect]); // Ahora onDisconnect sí existe y no dará error
+
+  const handleQuit = async () => {
+    
+    await invoke("stop_client");
+    
+      onDisconnect(); 
+  };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-
-    // Ya no agregamos el mensaje manualmente aquí, 
-    // porque el servidor nos lo devolverá y el listener lo atrapará.
     await invoke("send_message", { text: input });
     setInput("");
   };
 
   return (
-    <div className="chat-container">
-      <div className="messages">
+    <div className="chat-container" style={{ padding: 20 }}>
+      <div style={{ marginBottom: 10, overflow: 'hidden' }}>
+        <h2 style={{ float: 'left', margin: 0 }}>Sala de Chat</h2>
+        <button onClick={handleQuit} style={{ float: 'right' }}>Desconectar</button>
+      </div>
+      
+      <div className="messages" style={{ 
+          border: '1px solid #ccc', 
+          height: '300px', 
+          overflowY: 'auto', 
+          padding: '10px',
+          marginBottom: '10px',
+          background: '#fff'
+      }}>
         {messages.map((m, i) => (
-          <div key={i} className="message-line">{m}</div>
+          <div key={i} className="message-line" style={{ marginBottom: '5px' }}>{m}</div>
         ))}
       </div>
-      <div className="input-area">
+
+      <div className="input-area" style={{ display: 'flex', gap: '10px' }}>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-          placeholder="Escribí un mensaje"
+          placeholder="Escribí un mensaje..."
+          style={{ flex: 1, padding: '5px' }}
         />
-        <button onClick={sendMessage}>Enviar</button>
+        <button onClick={sendMessage} style={{ padding: '5px 15px' }}>Enviar</button>
       </div>
     </div>
   );

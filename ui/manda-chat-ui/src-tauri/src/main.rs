@@ -21,7 +21,7 @@ fn start_client(
 ) -> Result<String, String> {
 
    
-    let mut current_dir = std::env::current_dir().map_err(|e| format!("Error de CWD: {}", e))?;
+    let current_dir = std::env::current_dir().map_err(|e| format!("Error de CWD: {}", e))?;
 
     
     let mut bin_path = current_dir.clone();
@@ -106,6 +106,22 @@ fn send_message(
     Ok(())
 }
 
+#[tauri::command]
+fn stop_client(state: tauri::State<ClientState>) -> Result<(), String> {
+    let mut child_guard = state.child.lock().unwrap();
+    
+    if let Some(mut child) = child_guard.take() {
+       
+        let _ = child.kill(); 
+        let _ = child.wait(); 
+    }
+    
+    let mut stdin_guard = state.stdin.lock().unwrap();
+    *stdin_guard = None;
+
+    Ok(())
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(ClientState {
@@ -114,7 +130,8 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             start_client,
-            send_message
+            send_message,
+            stop_client
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

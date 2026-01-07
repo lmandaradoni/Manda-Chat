@@ -12,30 +12,21 @@ int main() {
     //char* puerto    = config_get_string_value(config, "PUERTO_SERVER");
     //char* ip        = config_get_string_value(config, "IP_SERVER");
     
+    setbuf(stdout, NULL);
     
     char nombre[50];
     char puerto[20];
     char ip[20];
     
     esperar_init(nombre, ip, puerto);
-    // printf("Ingrese su nombre: ");
-    // fflush(stdout);   // importante si usás logs / buffers
-    // fgets(nombre, sizeof(nombre), stdin);
-    // nombre[strcspn(nombre, "\n")] = '\0';
-    // printf("Ingrese ip del servidor: ");
-    // fflush(stdout);   // importante si usás logs / buffers
-    // fgets(ip, sizeof(ip), stdin);
-    // ip[strcspn(ip, "\n")] = '\0';
-    // printf("Ingrese su puerto del servidor: ");
-    // fflush(stdout);   // importante si usás logs / buffers
-    // fgets(puerto, sizeof(puerto), stdin);
-    // puerto[strcspn(puerto, "\n")] = '\0';
-    // printf("DEBUG: IP='%s' Puerto='%s'\n", ip, puerto);
-    
-    
-    //printf("Hola %s!\n", nombre);
-    
+
     int socket_server = crear_conexion(ip, puerto);
+
+
+    if (socket_server == -1) {
+
+        return 1; 
+    }
     
     emit_conexion(ip, puerto);
     
@@ -45,6 +36,12 @@ int main() {
     int largo_nombre = strlen(nombre) + 1;
     int tam_buffer = sizeof(int) + largo_nombre;
     void *buffer = malloc(tam_buffer);
+
+    if (buffer == NULL) {
+        emit_error("Error de memoria");
+        close(socket_server);
+        return 1;
+    }
     
     memcpy(buffer + offset, &largo_nombre, sizeof(int));
     offset += sizeof(int);
@@ -53,8 +50,18 @@ int main() {
     
     //log_info(logger, "enviando nombre al servidor: %s", nombre);
     //log_info(logger, "tam buffer: %d", tam_buffer);
-    send(socket_server, &tam_buffer, sizeof(int), 0);
-    send(socket_server, buffer, tam_buffer, 0);
+    if(send(socket_server, &tam_buffer, sizeof(int), 0) == -1){
+        emit_error("Error enviando handshake");
+        free(buffer);
+        close(socket_server);
+        return 1;
+    }
+    if(send(socket_server, buffer, tam_buffer, 0) == -1){
+        emit_error("Error enviando handshake");
+        free(buffer);
+        close(socket_server);
+        return 1;
+    }
     free(buffer);
     
     

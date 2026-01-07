@@ -21,14 +21,14 @@ int crear_conexion(char *ip, char *puerto){
                             server_info->ai_socktype,
                             server_info->ai_protocol);
     if (socket_cliente == -1) {
-        emit_error("ERROR");
+        emit_error("crear server");
         //perror("socket");
         freeaddrinfo(server_info);
         return -1;
     }
 
     if (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
-        emit_error("ERROR");
+        emit_error("error al hacer connect");
         //perror("connect");
         close(socket_cliente);
         freeaddrinfo(server_info);
@@ -48,7 +48,7 @@ t_log* iniciar_logger(void){
     if(nuevo_logger == NULL)
     {
         perror("No se pudo crear el log \n");
-        emit_error("ERROR");
+        emit_error("error iniciar logger");
         exit(EXIT_FAILURE);
     }
     return nuevo_logger;
@@ -58,7 +58,7 @@ t_config* iniciar_config(char* rutaConfig){
 
     if(nuevo_config==NULL){
         perror("Error al cargar el config \n");
-        emit_error("ERROR");
+        emit_error("error con config");
         exit(EXIT_FAILURE);
     }
     
@@ -145,19 +145,22 @@ void* escuchar_mensajes(void* arg){
 
         if (recv(socket, &tam_buffer, sizeof(int), MSG_WAITALL) <= 0) {
             //log_info(logger, "No hay mensajes nuevos del servidor");
-            emit_error("ERROR");
+            //emit_error("ERROR");
+
+            printf("{\"type\":\"desconexion\",\"motivo\":\"servidor_caido\"}\n");
+            fflush(stdout);
             close(socket);
-            break;              
+            exit(1);             
         }
 
         void* buffer = malloc(tam_buffer);
         if (recv(socket, buffer, tam_buffer, MSG_WAITALL) <= 0) {
             //log_error(logger, "Error recibiendo buffer del servidor");
-            emit_error("ERROR");
-
-            free(buffer);
+            //emit_error("ERROR");
+            printf("{\"type\":\"desconexion\",\"motivo\":\"servidor_caido\"}\n");
+            fflush(stdout);
             close(socket);
-            break;
+            exit(1);
         }
 
         memcpy(&tam_nombre, buffer + offset, sizeof(int));
@@ -222,9 +225,7 @@ void loop_comandos(int socket, const char* nombre) {
 
     while (fgets(buffer, sizeof(buffer), stdin)) {
         log_info(logger, "el buffer contiene %s", buffer);
-        //fgets hace que el buffer contenga lo que haya aparecido en stdout
-            //si hago echo "hola"
-            //el buffer contendra "hola"
+        
 
         if (strstr(buffer, "\"cmd\":\"send\"")) {
 
@@ -240,8 +241,10 @@ void loop_comandos(int socket, const char* nombre) {
             enviar_mensaje(nombre, socket, inicio);
         }
 
+        
+
         else if (strstr(buffer, "\"cmd\":\"quit\"")) {
-            emit_error("Salida");
+            printf("{\"type\":\"desconexion\",\"motivo\":\"usuario\"}\n");
             break;
         }
         

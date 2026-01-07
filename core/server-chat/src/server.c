@@ -184,20 +184,31 @@ void atender_cliente(void* arg){
 
         int tam_nombre;
         char* nombre;
+        
         //log_info(logger, "Esperando mensajes de los clientes...");
 
         if (recv(fd_conexion_ptr, &tam_buffer, sizeof(int), MSG_WAITALL) <= 0) {
-            log_info(logger, "Error: posible desconexion %d", fd_conexion_ptr);
+            log_info(logger,"Error: posible desconexion %d", fd_conexion_ptr);
             
-            continue;              
+            manejar_desconexion(fd_conexion_ptr);
+            
+
+            break;;              
         }
 
         void* buffer = malloc(tam_buffer);
+
+        //log_info(logger, "Esperando buffer de los clientes...");
         if (recv(fd_conexion_ptr, buffer, tam_buffer, MSG_WAITALL) <= 0) {
+            
+            manejar_desconexion(fd_conexion_ptr);
+            
             log_error(logger, "Error recibiendo buffer del cliente %d", fd_conexion_ptr);
 
+
+
             free(buffer);
-            continue;
+            break;
         }
 
         
@@ -211,8 +222,19 @@ void atender_cliente(void* arg){
             int socket_cliente = usuario->socket;
             //log_info(logger, "Enviando mensaje al usuario %s en el socket %d", usuario->nombre, socket_cliente);
             
-            send(socket_cliente, &tam_buffer, sizeof(int), 0);
-            send(socket_cliente, buffer, tam_buffer, 0);
+            //log_info(logger, "enviando mensaje %s al usuario %s", mensaje, usuario->nombre);
+            if(send(socket_cliente, &tam_buffer, sizeof(int), 0) == -1){
+
+                log_error(logger, "No se pudo enviar mensaje al socket %d", socket_cliente);
+                //manejar_desconexion(socket_cliente);
+                continue;
+            }
+            if(send(socket_cliente, buffer, tam_buffer, 0) == -1){
+                log_error(logger, "No se pudo enviar mensaje al socket %d", socket_cliente);
+                //manejar_desconexion(socket_cliente);
+                continue;
+            }
+
             
         }
         pthread_mutex_unlock(&mutex_conectados);
@@ -235,5 +257,27 @@ void atender_cliente(void* arg){
         free(buffer);
         free(nombre);
     }
+
+}
+
+
+void manejar_desconexion(int fd_conexion_ptr){
+
+    pthread_mutex_lock(&mutex_conectados);
+    for(int i = 0; i<list_size(usuarios_conectados); i++){
+
+        t_user* user = list_get(usuarios_conectados, i);
+        
+        if(user->socket == fd_conexion_ptr){
+            
+            //log_info(logger, "Se ha quitado al user %s de la lista de conectados", user->nombre);
+            list_remove(usuarios_conectados, i);
+            
+            close(user->socket);
+            break;
+        }
+
+    }
+    pthread_mutex_unlock(&mutex_conectados);
 
 }

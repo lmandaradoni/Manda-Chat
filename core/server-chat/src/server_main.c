@@ -6,7 +6,7 @@ t_config* config;
 t_list* usuarios_conectados;
 
 int main() {
-
+    signal(SIGPIPE, SIG_IGN);
     logger = iniciar_logger();
 
     //log_info(logger, "path es /home/luca/Manda-Chat/server-chat/src/server.config");
