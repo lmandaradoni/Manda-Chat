@@ -27,11 +27,11 @@ fn start_client(
     let mut bin_path = current_dir.clone();
   
     if bin_path.ends_with("src-tauri") {
-        bin_path.pop(); // a manda-chat-ui
+        bin_path.pop();
     }
     
-    bin_path.pop(); // de manda-chat-ui a ui
-    bin_path.pop(); // de ui a Manda-Chat 
+    bin_path.pop(); 
+    bin_path.pop(); 
  
     bin_path.push("core");
     bin_path.push("client-chat");
@@ -63,7 +63,7 @@ fn start_client(
         name, ip, port
     );
     
-    use std::io::Write; // Asegúrate de tener esto para el write_all
+    use std::io::Write;
     stdin.write_all(init_msg.as_bytes()).map_err(|e| e.to_string())?;
     stdin.flush().unwrap();
 

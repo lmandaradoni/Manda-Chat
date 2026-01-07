@@ -22,14 +22,12 @@ int crear_conexion(char *ip, char *puerto){
                             server_info->ai_protocol);
     if (socket_cliente == -1) {
         emit_error("crear server");
-        //perror("socket");
         freeaddrinfo(server_info);
         return -1;
     }
 
     if (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
         emit_error("error al hacer connect");
-        //perror("connect");
         close(socket_cliente);
         freeaddrinfo(server_info);
         return -1;
@@ -37,7 +35,6 @@ int crear_conexion(char *ip, char *puerto){
 
     freeaddrinfo(server_info);
 
-    //log_info(logger, "se creo la conexion al servidor %s : %s", ip, puerto);
     return socket_cliente;
 }
 
@@ -71,9 +68,7 @@ void enviar_mensajes(const char* nombre, int socket){
     
     while(1){
         char mensaje[1024];
-        //char mensaje_final[1024];
-        //const char* nombre_usuario = nombre;
-        //printf("Ingrese su mensaje: \n");
+
         fflush(stdout);
         
         if(fgets(mensaje, sizeof(mensaje), stdin) == NULL){
@@ -82,21 +77,14 @@ void enviar_mensajes(const char* nombre, int socket){
             break;
         }
 
-        //printf("\033[1A\033[2K\r"); 
+    
         printf("MENSAJE DESDE UI: %s", mensaje);
         fflush(stdout);
-
-        // mensaje[strcspn(mensaje, "\n")] = '\0';
-        // snprintf(mensaje_final, sizeof(mensaje_final),
-        //         "%s: %s", nombre_usuario, mensaje);
-
-
         
         int offset = 0;
         int largo_mensaje = strlen(mensaje) + 1;
         int largo_nombre = strlen(nombre) + 1;
         
-        //int tam_buffer = sizeof(int) + largo_mensaje + largo_nombre;
         int tam_buffer = sizeof(int) * 2 + largo_nombre + largo_mensaje;
 
         
@@ -112,18 +100,11 @@ void enviar_mensajes(const char* nombre, int socket){
         offset += largo_mensaje;
         
         
-        //log_info(logger, "Enviando mensaje-> %s: %s", nombre, mensaje);
         send(socket, &tam_buffer, sizeof(int), 0);
         send(socket, buffer, tam_buffer, 0);
         
-
-
-        //printf("\033[2K\r");
         fflush(stdout);
-        
         free(buffer);
-
-        
 
     }
 }
@@ -144,9 +125,6 @@ void* escuchar_mensajes(void* arg){
         char* nombre;
 
         if (recv(socket, &tam_buffer, sizeof(int), MSG_WAITALL) <= 0) {
-            //log_info(logger, "No hay mensajes nuevos del servidor");
-            //emit_error("ERROR");
-
             printf("{\"type\":\"desconexion\",\"motivo\":\"servidor_caido\"}\n");
             fflush(stdout);
             close(socket);
@@ -155,8 +133,7 @@ void* escuchar_mensajes(void* arg){
 
         void* buffer = malloc(tam_buffer);
         if (recv(socket, buffer, tam_buffer, MSG_WAITALL) <= 0) {
-            //log_error(logger, "Error recibiendo buffer del servidor");
-            //emit_error("ERROR");
+
             printf("{\"type\":\"desconexion\",\"motivo\":\"servidor_caido\"}\n");
             fflush(stdout);
             close(socket);
@@ -175,9 +152,7 @@ void* escuchar_mensajes(void* arg){
         mensaje = malloc(tam_mensaje);
         memcpy(mensaje, buffer + offset, tam_mensaje);
         offset += tam_mensaje;
-        //log_info(logger, "%s", mensaje);
-        
-        //log_info(logger, "Recibiendo -> %s: %s", nombre, mensaje);
+
         emit_mensaje(nombre, mensaje);
 
         free(mensaje);
@@ -245,6 +220,7 @@ void loop_comandos(int socket, const char* nombre) {
 
         else if (strstr(buffer, "\"cmd\":\"quit\"")) {
             printf("{\"type\":\"desconexion\",\"motivo\":\"usuario\"}\n");
+            fflush(stdout);
             break;
         }
         
