@@ -113,11 +113,10 @@ void* aceptar_clientes(void* arg){
 
         char* buffer = malloc(tam_buffer);
         if (recv(*fd_conexion_ptr, buffer, tam_buffer, MSG_WAITALL) <= 0) {
-            log_error(logger, "Error recibiendo buffer");
+            log_error(logger, "CLIENTE DESCONECTADO");
             free(buffer);
-            close(*fd_conexion_ptr);
-            free(fd_conexion_ptr);
-            break;
+            
+            continue;
         }
 
         //log_info(logger, "Recibo buffer");
@@ -128,8 +127,6 @@ void* aceptar_clientes(void* arg){
         if (tamanio_nombre_user <= 0 || tamanio_nombre_user > 1024) {
             log_error(logger, "Tamaño de nombre inválido: %d", tamanio_nombre_user);
             free(buffer);
-            close(*fd_conexion_ptr);
-            free(fd_conexion_ptr);
             continue;
         }
 
@@ -190,17 +187,17 @@ void atender_cliente(void* arg){
         //log_info(logger, "Esperando mensajes de los clientes...");
 
         if (recv(fd_conexion_ptr, &tam_buffer, sizeof(int), MSG_WAITALL) <= 0) {
-            log_info(logger, "No hay mensajes nuevos de este cliente %d", fd_conexion_ptr);
+            log_info(logger, "Error: posible desconexion %d", fd_conexion_ptr);
             
-            break;              
+            continue;              
         }
 
         void* buffer = malloc(tam_buffer);
         if (recv(fd_conexion_ptr, buffer, tam_buffer, MSG_WAITALL) <= 0) {
             log_error(logger, "Error recibiendo buffer del cliente %d", fd_conexion_ptr);
+
             free(buffer);
-            close(fd_conexion_ptr);
-            break;
+            continue;
         }
 
         
