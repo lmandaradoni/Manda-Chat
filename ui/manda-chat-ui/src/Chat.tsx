@@ -13,14 +13,12 @@ interface BackendPayload {
   mensaje?: string;
 }
 
-// CORRECCIÓN IMPORTANTE: Agregamos { onDisconnect }: ChatProps aquí abajo
 function Chat({ onDisconnect }: ChatProps) {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState("");
 
   useEffect(() => {
     const setupListener = async () => {
-      // Escuchamos los mensajes que vienen de Rust (backend-msg)
       const unlisten = await listen<string>("backend-msg", (event) => {
         console.log("Llegó de Rust:", event.payload); 
         try {
@@ -29,7 +27,7 @@ function Chat({ onDisconnect }: ChatProps) {
           if (data.type === "mensaje") {
             setMessages((prev) => [...prev, `${data.de}: ${data.text}`]);
           }
-          // Si es error o desconexión, llamamos a la función que nos pasó App.tsx
+          
           else if (data.type === "desconexion" || data.type === "error"){
             console.log("Desconexion recibida:", data);
             onDisconnect(); 
@@ -44,11 +42,11 @@ function Chat({ onDisconnect }: ChatProps) {
 
     const listenerPromise = setupListener();
 
-    // Limpieza al desmontar
+
     return () => {
       listenerPromise.then(unlisten => unlisten());
     };
-  }, [onDisconnect]); // Ahora onDisconnect sí existe y no dará error
+  }, [onDisconnect]); 
 
   const handleQuit = async () => {
     

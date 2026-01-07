@@ -43,7 +43,6 @@ function App() {
 
   const handleDisconnect = () => {
     setStatus("idle");
-    //setMessages([]);
 
     invoke("stop_client").catch(console.error);
   };
@@ -58,7 +57,7 @@ return (
         <form
           className="form"
           onSubmit={(e) => {
-            e.preventDefault(); // evita reload
+            e.preventDefault();
             if (!isDisabled) {
               handleConnect();
             }
