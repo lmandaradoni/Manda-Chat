@@ -21,7 +21,7 @@ int main() {
     int socket_server = iniciar_servidor(puerto);
     log_info(logger, "Esperando clientes en el puerto %s : %s", puerto, ip);
 
-
+    
 
     
     pthread_t hilo_aceptar_clientes;      

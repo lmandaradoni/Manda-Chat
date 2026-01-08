@@ -46,10 +46,12 @@ UI (React)` <-> Tauri <-> Pipes (JSON) <-> Core (C) <-> Sockets TCP <-> Servidor
 
 ### Ejecución
     Haz en tu terminal de linux:
+    
 	cd Manda-Chat
 
 #### Para levantar un servidor debes hacer:
 	./run-server.sh
+
 	Este script ejecutara el codigo y emitirá en la terminal una ip y puerto, los cuales deberas pasar a los usuarios que deseen ingresar a chatear.
 	Para este codigo yo utilicé bore como herramienta para hacer un tunel TCP, el cual hará todo automaticamente.
 	(dentro del codigo la ip es 127.0.0.1 y el puerto 9191)

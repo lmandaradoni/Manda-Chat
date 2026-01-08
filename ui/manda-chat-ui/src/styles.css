@@ -17,7 +17,7 @@ body {
 .app {
   padding: 32px;
   width: 100%;
-  max-width: 500px; /* Un poco más ancho para chat */
+  max-width: 950px; /* Un poco más ancho para chat */
   margin: auto;
   
   /* Cambio: Fondo gris oscuro en vez de turquesa */

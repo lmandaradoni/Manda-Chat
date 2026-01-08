@@ -67,7 +67,7 @@ t_config* iniciar_config(char* rutaConfig){
 void enviar_mensajes(const char* nombre, int socket){
     
     while(1){
-        char mensaje[1024];
+        char mensaje[32768];
 
         fflush(stdout);
         
@@ -78,7 +78,7 @@ void enviar_mensajes(const char* nombre, int socket){
         }
 
     
-        printf("MENSAJE DESDE UI: %s", mensaje);
+        //printf("MENSAJE DESDE UI: %s", mensaje);
         fflush(stdout);
         
         int offset = 0;
@@ -174,7 +174,7 @@ void emit_conexion(const char* server, const char* port) {
 }
 
 void emit_mensaje(const char* from, const char* text) {
-    char limpio[1024];
+    char limpio[32768];
     strncpy(limpio, text, sizeof(limpio));
     
     for(int i = 0; limpio[i]; i++) {
@@ -196,7 +196,7 @@ void emit_error(const char* msg) {
 
 
 void loop_comandos(int socket, const char* nombre) {
-    char buffer[1024];
+    char buffer[32768];
 
     while (fgets(buffer, sizeof(buffer), stdin)) {
         log_info(logger, "el buffer contiene %s", buffer);
@@ -256,7 +256,7 @@ void enviar_mensaje(const char* nombre, int socket, const char* mensaje) {
 
 
 void esperar_init(char* nombre, char* ip, char* puerto) {
-    char buffer[1024];
+    char buffer[32768];
 
     while (fgets(buffer, sizeof(buffer), stdin)) {
 

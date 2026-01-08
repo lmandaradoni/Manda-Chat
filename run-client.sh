@@ -1,3 +1,3 @@
 #!/bin/bash
-cd ui/manda-chat-ui
+cd Manda-Chat/ui/manda-chat-ui
 npm run tauri dev

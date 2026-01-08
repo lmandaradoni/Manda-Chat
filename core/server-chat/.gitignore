@@ -17,3 +17,4 @@ obj/
 !.vscode/launch.json
 !.vscode/settings.json
 !.vscode/tasks.json
+echo "*.log" >> .gitignore

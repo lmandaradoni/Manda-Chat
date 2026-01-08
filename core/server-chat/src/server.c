@@ -63,7 +63,7 @@ int esperar_clientes(int socket_servidor){
 }
 
 t_log* iniciar_logger(void){   
-    t_log* nuevo_logger= log_create("master.log", "Master Logger", 1, LOG_LEVEL_INFO);
+    t_log* nuevo_logger= log_create("server.log", "Master Logger", 1, LOG_LEVEL_INFO);
     if(nuevo_logger == NULL)
     {
         perror("No se pudo crear el log \n");
@@ -87,7 +87,7 @@ t_config* iniciar_config(char* rutaConfig){
 void* aceptar_clientes(void* arg){
     int servidor_escucha = *(int*)arg;
 
-    log_debug(logger, "Listo para aceptar QUERYS y WORKERS");
+    
 
     pthread_mutex_init(&mutex_conectados, NULL);
 
@@ -103,7 +103,10 @@ void* aceptar_clientes(void* arg){
         int tamanio_nombre_user;
         char* nombre_user;
 
-        recv(*fd_conexion_ptr, &tam_buffer, sizeof(int), MSG_WAITALL);
+        if(recv(*fd_conexion_ptr, &tam_buffer, sizeof(int), MSG_WAITALL) <= 0){
+            log_error(logger, "CLIENTE DESCONECTADO");
+            continue;
+        }
 
         char* buffer = malloc(tam_buffer);
         if (recv(*fd_conexion_ptr, buffer, tam_buffer, MSG_WAITALL) <= 0) {
@@ -117,7 +120,7 @@ void* aceptar_clientes(void* arg){
         offset += sizeof(int);
 
         if (tamanio_nombre_user <= 0 || tamanio_nombre_user > 1024) {
-            log_error(logger, "Tamaño de nombre inválido: %d", tamanio_nombre_user);
+            //log_error(logger, "Tamaño de nombre inválido: %d", tamanio_nombre_user);
             free(buffer);
             continue;
         }
@@ -183,7 +186,7 @@ void atender_cliente(void* arg){
             
             manejar_desconexion(fd_conexion_ptr);
             
-            log_error(logger, "Error recibiendo buffer del cliente %d", fd_conexion_ptr);
+            //log_error(logger, "Error recibiendo buffer del cliente %d", fd_conexion_ptr);
 
 
 
@@ -199,12 +202,12 @@ void atender_cliente(void* arg){
             int socket_cliente = usuario->socket;
 
             if(send(socket_cliente, &tam_buffer, sizeof(int), 0) == -1){
-                log_error(logger, "No se pudo enviar mensaje al socket %d", socket_cliente);
+                //log_error(logger, "No se pudo enviar mensaje al socket %d", socket_cliente);
                 continue;
             }
             
             if(send(socket_cliente, buffer, tam_buffer, 0) == -1){
-                log_error(logger, "No se pudo enviar mensaje al socket %d", socket_cliente);
+                //log_error(logger, "No se pudo enviar mensaje al socket %d", socket_cliente);
                 continue;
             }
 
